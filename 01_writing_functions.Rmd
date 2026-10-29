@@ -1,0 +1,151 @@
+---
+title: "writing_functions"
+author: emanuel clemente
+output: github_document
+date: "2026-10-29"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(rvest)    # `read_html()` for the NSDUH web table
+library(readxl)   # `read_excel()` for the LOTR spreadsheet
+```
+
+## Functions!
+
+Start small with Z scores.
+
+```{r}
+# `rnorm()` draws random values from a normal distribution: n values, with this mean and sd.
+# The values change every run; add `set.seed()` with any number above this line to get the same values every time.
+
+x_vec = rnorm(n = 40, mean = 12, sd = 63)
+
+# Z score = (value - mean) / sd: how many SDs each value is from the mean
+
+(x_vec - mean(x_vec)) / sd(x_vec)
+```
+
+Let's turn this into a function.
+
+```{r}
+# `function(x)` creates a function with one ARGUMENT, x (the input).
+# The code inside { } runs each time the function is called.
+
+z_scores = function(x) {
+  
+ # Input checks: `stop()` halts the function with a custom error message
+  
+ if (!is.numeric(x)) {                     # ! means "not": runs if x is NOT numeric
+   stop("Input x must be numeric")
+ } else if(length(x) < 5) {                # checked only if the first condition was FALSE
+   stop("x should have 5 or more numbers")
+ }
+  
+ z = (x - mean(x)) / sd(x)                 # the same Z score calculation as above
+  
+  return(z)                                # `return()` sends the result back as the output
+ 
+}
+```
+
+Does this actually work?
+
+```{r}
+z_scores(x_vec)
+z_scores(rpois(4000, lambda = 12))   # `rpois()` draws random counts from a Poisson distribution with mean lambda
+```
+
+Don't run these on knitting
+
+```{r eval = FALSE}
+# `eval = FALSE` shows this code without running it, since each line triggers an error by design
+
+z_scores(iris)                         # a dataframe, not a numeric vector -> "must be numeric"
+z_scores("my name is emanuel")         # text -> "must be numeric"
+z_scores(c(TRUE, TRUE, FALSE, FALSE))  # logical values don't count as numeric -> "must be numeric"
+z_scores(3)                            # numeric, but only 1 value -> "5 or more numbers"
+```
+
+## Mean and SD
+
+```{r}
+mean(x_vec)
+sd(x_vec)
+```
+
+Write a function that returns the mean and sd of an input vector.
+
+```{r}
+# `source()` runs another R script, so the functions defined in it become available here.
+# Keeping functions in separate files keeps this document shorter and lets other files reuse them.
+
+source("source/mean_and_sd.R")
+```
+
+Check that this works
+
+```{r}
+mean_and_sd(x_vec)
+```
+
+## Motivate and Write Another One
+
+```{r}
+source("source/sim_mean_sd.R")
+```
+
+```{r}
+# R matches arguments to a function either by NAME or by POSITION
+
+sim_mean_sd(n_obs = 4000, mu = 12, sigma = 3)   # named: order doesn't matter
+
+sim_mean_sd(4000, 12, 3)                        # positional matching: values match arguments in the order they're defined
+
+mean(x_vec)
+
+sim_mean_sd(50)   # only n_obs given; mu and sigma use their DEFAULT values set in the function definition
+```
+
+## Fix Things That Bother Me
+
+Jeff said in class this bothered him:
+
+```{r}
+source("source/asdf.R") # what you name the R script does not matter, so long as the path in `source()` matches the file name
+
+# The same import-and-tidy steps for three movies, written once as a function and called three times.
+# Only the inputs change: which cells to read and which movie label to add.
+
+fellowship_df =
+  lotr_import(cell_range = "B3:D6", movie_title = "fellowship")
+
+two_towers_df =
+  lotr_import(cell_range = "F3:H6", movie_title = "two_towers")
+
+return_df =
+  lotr_import(cell_range = "J3:L6", movie_title = "return_of_king")
+```
+
+```{r}
+source("source/nsduh_process.R")
+
+url = "https://www.samhsa.gov/data/sites/default/files/NSDUHsaeShortTermCHG2015/NSDUHsaeShortTermCHG2015.htm"
+drug_use_html = read_html(url)   # download the page once, then reuse it for every table
+
+# `nsduh_process()` pulls one table from the page by its position `(table_num)` and cleans it,
+# replacing the copy-and-paste code from the web scraping lecture
+
+marj_df =
+  nsduh_process(html = drug_use_html, table_num = 1)
+  
+cocaine_df =
+  nsduh_process(html = drug_use_html, table_num = 4)
+  
+heroin_df =
+  nsduh_process(html = drug_use_html, table_num = 5)
+```
