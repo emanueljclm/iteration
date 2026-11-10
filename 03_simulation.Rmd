@@ -1,0 +1,113 @@
+---
+title: "03_simulation"
+output: github_document
+date: "2026-11-10"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+
+source("source/sim_mean_sd.R")
+```
+
+## Mean and SD
+
+Can We Check CLT Using Simulations?
+
+```{r}
+sim_mean_sd(n_obs = 30)
+```
+
+Let's Do This, But Keep Track of Results
+
+```{r}
+output = vector("list", length = 1000)
+
+for (i in 1:1000) {
+  
+  output[[i]] = sim_mean_sd(n_obs = 30)
+  
+}
+```
+
+Inspect Results
+
+```{r}
+output |>
+  bind_rows() |>
+  summarize(
+    emp_m = mean(mean),
+    emp_se = sd(mean)
+  )
+```
+
+```{r}
+output |>
+  bind_rows() |>
+  ggplot(aes(x = mean)) +
+  geom_density()           # check updated sim_mean_sd.R source
+```
+
+Let's Do This Using Tibbles and Map Instead
+
+```{r}
+sim_results_df =
+  tibble(
+    samp_size = rep(30, 1000)
+  ) |>
+  mutate(                                  # considered the intermediate dataframe
+    est_df = map(samp_size, sim_mean_sd)
+  ) |>
+  unnest(est_df)
+```
+
+Look at the Results
+
+```{r}
+sim_results_df |>
+  ggplot(aes(x = mean)) +
+  geom_density()
+```
+
+## Change `n`
+
+```{r}
+sim_results_df =
+  expand_grid(
+    samp_size = c(30, 60, 120, 240),     # gives all combinations of the listed numbers 1,000 times
+    iter = 1:1000
+  ) |>
+  mutate(                                  # considered the intermediate data frame
+    est_df = map(samp_size, sim_mean_sd)
+  ) |>
+  unnest(est_df)
+```
+
+```{r}
+sim_results_df |>
+  mutate(
+    samp_size = str_c("n =", samp_size),
+    samp_size = fct_inorder(samp_size)
+  ) |>
+  ggplot(aes(x = samp_size, y = mean)) +
+  geom_violin()
+```
+
+Look at the Numbers
+
+```{r}
+sim_results_df |>
+  mutate(
+    samp_size = str_c("n =", samp_size),
+    samp_size = fct_inorder(samp_size)
+  ) |>
+  group_by(samp_size) |>
+  summarize(
+    emp_m = mean(mean),
+    emp_se = sd(mean)
+  )
+```

@@ -20,6 +20,8 @@ sim_mean_sd = function(n_obs, mu = 12, sigma = 3) {
       x = rnorm(n = n_obs, mean = mu, sd = sigma)
     )
   
+  # OR sim_df = tibble(x = rnorm(n = n_obs, mean = mu, size = 1, prob = .5)) to [...]
+  
   # Calculate the SAMPLE mean and sd, which will be close to (but not exactly) mu and sigma
   
   return_df =                    # FIX: was originally "return_df |> sim_df |>"
