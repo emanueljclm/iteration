@@ -111,3 +111,30 @@ sim_results_df |>
     emp_se = sd(mean)
   )
 ```
+
+## Simple Linear Regression (SLR)
+
+Generate Once
+
+```{r}
+sim_data =
+  tibble(
+    x = rnorm(30, mean = 1, sd = 1),
+    y = 2 + 3 * x + rnorm(30, mean = 0, sd = 1)
+  )
+
+# sim_data |>
+#   ggplot(aes(x = x, y = y)) +
+#   geom_point() +
+#   geom_smooth(method = "lm", se = FALSE)
+
+fit = lm(y ~ x, data = sim_data)
+
+fit
+```
+
+Turn This Into a Function (Check `source/sim_slr.R`)
+
+```{r}
+sim_slr(30)
+```
