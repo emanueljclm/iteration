@@ -12,6 +12,10 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 
 source("source/sim_mean_sd.R")
+source("source/sim_slr.R")
+source("source/birthday_repeated.R")
+
+set.seed(1236)
 ```
 
 ## Mean and SD
@@ -137,4 +141,84 @@ Turn This Into a Function (Check `source/sim_slr.R`)
 
 ```{r}
 sim_slr(30)
+```
+
+Do This A Lot
+
+```{r}
+slr_results_df =
+  tibble(
+    samp_size = rep(30, 1000)
+  ) |>
+  mutate(
+    est_df = map(samp_size, sim_slr)
+  )
+```
+
+Is This Right?
+
+```{r}
+slr_results_df |>
+  summarize(
+    b0_mean = mean(beta0_hat),
+    b0_se = sd(beta0_hat)
+  )
+```
+
+Look at the Results
+
+```{r}
+slr_results_df |>
+  ggplot(aes(x = beta0_hat)) +
+  geom_density()
+
+slr_results_df |>
+  ggplot(aes(x = beta0_hat, y = beta1_hat)) +
+  geom_point()
+```
+
+## The Birthday Problem Example
+
+```{r}
+birthdays = sample(1:365, size = 5, replace = TRUE) # `replace = TRUE` means that if you sample from 1 of 365, by default, it means you can draw a number and can't draw it again
+
+repeated_birthdays = length(unique(birthdays)) < 5 # "is the number of unique birthdays less than the number of people in the room?"
+
+repeated_birthdays
+```
+
+Turn This Into a Function
+
+```{r}
+birthday_repeated(147)
+
+birthday_results_df =
+  tibble(
+    number_of_people = rep(5, 10000)
+  ) |>
+  mutate(
+    repeated = map_lgl(number_of_people, birthday_repeated) # lgl portion lists whether TRUE or FALSE
+  )
+```
+
+```{r}
+birthday_results_df =
+  expand_grid(
+    number_of_people = 5:50,
+    iter = 1:1000
+  ) |>
+  mutate(
+    repeated - map_lgl(number_of_people, birthday_repeated)
+  )
+```
+
+Look at the Results
+
+```{r}
+birthday_results_df |>
+  group_by(number_of_people) |>
+  summarize(prob_of_repeat = mean(repeated)) |>
+  ggplot(aes(x = number_of_people, y = prob_of_repeat)) +
+  geom_point() +
+  geom_line()
 ```
